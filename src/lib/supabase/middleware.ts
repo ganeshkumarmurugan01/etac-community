@@ -21,14 +21,8 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const protectedPaths = ['/dashboard', '/directory', '/meetings', '/portfolio/edit', '/admin']
-  const isProtected = protectedPaths.some(p => request.nextUrl.pathname.startsWith(p))
-
-  if (isProtected && !user) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
+  // Refresh session — do NOT redirect here, let pages handle auth
+  await supabase.auth.getUser()
 
   return supabaseResponse
 }
