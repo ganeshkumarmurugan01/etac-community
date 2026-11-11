@@ -15,7 +15,7 @@ export default function Hero() {
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-sm font-semibold mb-8 animate-fade-up">
           <span className="w-2 h-2 rounded-full bg-[#6FE7C1] animate-pulse" />
-          Asia&rsquo;s First Professional Network for Events &amp; Technology
+          Asia&rsquo;s First Professional Network for Events Technology
         </div>
 
         {/* Headline */}
