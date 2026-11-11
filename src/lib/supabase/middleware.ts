@@ -5,16 +5,16 @@ export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() { return request.cookies.getAll() },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, options as Parameters<typeof supabaseResponse.cookies.set>[2])
           )
         },
       },
@@ -23,24 +23,11 @@ export async function updateSession(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Protect dashboard routes
   const protectedPaths = ['/dashboard', '/directory', '/meetings', '/portfolio/edit', '/admin']
   const isProtected = protectedPaths.some(p => request.nextUrl.pathname.startsWith(p))
 
   if (isProtected && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  // Admin protection
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('membership_tier')
-      .eq('id', user?.id)
-      .single()
-    if (profile?.membership_tier !== 'partner' && user?.email !== process.env.ADMIN_EMAIL) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
   }
 
   return supabaseResponse
