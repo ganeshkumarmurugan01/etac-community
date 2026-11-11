@@ -1,48 +1,73 @@
 'use client'
+
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginForm() {
-  const router = useRouter()
-  const supabase = createClient()
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const { error } = await supabase.auth.signInWithPassword(form)
-    if (error) { setError(error.message); setLoading(false); return }
-    router.push('/dashboard')
-    router.refresh()
+
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+      return
+    }
+
+    // Full page reload ensures session cookie is sent with the next request
+    window.location.href = '/dashboard'
   }
 
-  const inputCls = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--emerald)] focus:ring-2 focus:ring-[var(--emerald)]/20 bg-white'
-
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-          <input className={inputCls} type="email" required value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="you@company.com" />
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+          {error}
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
-          <input className={inputCls} type="password" required value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
-        </div>
-        {error && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">{error}</div>}
-        <button type="submit" disabled={loading} className="w-full bg-[var(--emerald)] text-white font-semibold py-3 rounded-xl hover:bg-[var(--deep)] transition-colors disabled:opacity-60">
-          {loading ? 'Signing in…' : 'Sign in'}
-        </button>
-      </form>
-      <div className="mt-6 text-center space-y-2">
-        <Link href="/forgot-password" className="block text-sm text-gray-500 hover:text-[var(--emerald)]">Forgot password?</Link>
-        <p className="text-sm text-gray-400">Not a member? <Link href="/join" className="text-[var(--emerald)] font-medium hover:underline">Join free</Link></p>
+      )}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@company.com"
+          required
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        />
       </div>
-    </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        />
+      </div>
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full py-2 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-semibold rounded-lg transition-colors"
+      >
+        {loading ? 'Signing in...' : 'Sign in'}
+      </button>
+      <p className="text-center text-sm text-gray-500">
+        Forgot password? <a href="/forgot-password" className="text-emerald-600 hover:underline">Reset it</a>
+      </p>
+      <p className="text-center text-sm text-gray-500">
+        Not a member? <a href="/join" className="text-emerald-600 font-medium hover:underline">Join free</a>
+      </p>
+    </form>
   )
 }
